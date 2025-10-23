@@ -136,6 +136,36 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
+// ✅ Password Reset
+app.post("/auth/reset-password", async (req, res) => {
+  const { email, newPassword } = req.body || {};
+
+  if (!email || !newPassword) {
+    return res.status(400).json({ error: "Email and newPassword are required." });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // NOTE: your DB column is password_hash based on server.js register/login logic
+    const result = await sql`
+      UPDATE users
+      SET password_hash = ${hashedPassword}
+      WHERE email = ${email}
+      RETURNING id, email;
+    `;
+
+    if (!result.length) {
+      return res.status(404).json({ error: "No user found with that email." });
+    }
+
+    res.json({ message: "Password successfully reset." });
+  } catch (err) {
+    console.error("Error resetting password:", err);
+    res.status(500).json({ error: "Failed to reset password." });
+  }
+});
+
 // ✅ DB health check route
 app.get("/db-check", async (req, res) => {
   try {
