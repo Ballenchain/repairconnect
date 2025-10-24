@@ -114,8 +114,16 @@ function Home() {
         body: JSON.stringify({ email: resetEmail, newPassword }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Password reset failed.");
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        // Non-JSON response (e.g., HTML 404); handled below with fallback message.
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Please type a valid email.");
+      }
 
       setResetSuccess("Password successfully reset. You can now log in.");
       setTimeout(() => setShowResetModal(false), 2000);
