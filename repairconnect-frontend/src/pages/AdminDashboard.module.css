@@ -188,6 +188,10 @@
   background: #d32f2f;
 }
 
+.approveButton {
+  background: #388e3c;
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;
