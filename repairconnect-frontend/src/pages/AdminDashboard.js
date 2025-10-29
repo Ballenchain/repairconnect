@@ -18,6 +18,10 @@ function AdminDashboard() {
 
   // Suspension duration
   const [suspendDuration, setSuspendDuration] = useState("24");
+  // Role filter (Customer, Provider)
+  const [roleFilter, setRoleFilter] = useState("all");
+  // Status filter (Active, Pending, Suspended, Banned)
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const token = localStorage.getItem("rc_token");
 
@@ -104,8 +108,10 @@ function AdminDashboard() {
         throw new Error(body.error || "Failed to approve user");
       }
 
-      // On successful approval, remove the user from the local state to update the UI.
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      // On successful approval, update the user to "Active" status.
+      setUsers((prev) => prev.map((u) =>
+        u.id === userId ? { ...u, status: "active" } : u
+      ));
     } catch (err) {
       console.error("Failed to approve user", err);
       setError(err.message || "Failed to approve user");
@@ -270,6 +276,52 @@ function AdminDashboard() {
 
           <section className={styles.usersSection}>
             <h2 className={styles.sectionTitle}>Users</h2>
+
+	          {/* Filters: Role & Status */}
+	          <div
+  	          style={{
+    		        display: "flex",
+    		        justifyContent: "flex-end",
+    		        gap: "12px",
+    		        marginBottom: "10px",
+    		        marginRight: "20px",
+  	          }}
+	          >
+  	          {/* Role Filter */}
+  	          <select
+    		        value={roleFilter}
+    		        onChange={(e) => setRoleFilter(e.target.value)}
+    		        style={{
+      		        padding: "6px 10px",
+      		        borderRadius: "5px",
+      		        border: "1px solid #ccc",
+      		        fontSize: "0.9rem",
+    		        }}
+  	          >
+    		        <option value="all">All Roles</option>
+    		        <option value="customer">Customer</option>
+    		        <option value="provider">Provider</option>
+  	          </select>
+
+  	          {/* Status Filter */}
+  	          <select
+    		        value={statusFilter}
+    		        onChange={(e) => setStatusFilter(e.target.value)}
+    		        style={{
+      		        padding: "6px 10px",
+      		        borderRadius: "5px",
+      		        border: "1px solid #ccc",
+      		        fontSize: "0.9rem",
+    		        }}
+  	          >
+    		        <option value="all">All Statuses</option>
+    		        <option value="active">Active</option>
+    		        <option value="pending">Pending</option>
+    		        <option value="suspended">Suspended</option>
+    		        <option value="banned">Banned</option>
+  	          </select>
+	          </div>
+
             <div className={styles.tableWrapper}>
               <table className={styles.table}>
                 <thead>
@@ -284,8 +336,11 @@ function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Filter users to display only providers with a 'pending' status. */}
-                  {users.map((user) => {
+                  {users.filter((user) => {
+                    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    		            const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+    		            return matchesRole && matchesStatus;
+		              }).map((user) => {
                     const isActive = user.status === "active" || !user.status;
                     const isSuspended = user.status === "suspended";
                     const isBanned = user.status === "banned";
@@ -376,6 +431,18 @@ function AdminDashboard() {
                       </tr>
                     );
                   })}
+
+                  {users.filter((user) => {
+		                const matchesRole = roleFilter === "all" || user.role === roleFilter;
+  		              const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+  		              return matchesRole && matchesStatus;
+		              }).length === 0 && (
+  		              <tr>
+    		              <td colSpan="7" style={{ textAlign: "center", padding: "10px" }}>
+      			            No users found for the selected filters.
+    		              </td>
+  		              </tr>
+		              )}
                 </tbody>
               </table>
             </div>
